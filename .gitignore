@@ -1,0 +1,29 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Processed data (large files)
+data/processed/
+
+# Saved models (large files)
+saved_models/
