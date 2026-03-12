@@ -1,29 +1,35 @@
-# Virtual environment
-.venv/
-venv/
-env/
-
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
 *.egg-info/
 dist/
 build/
+*.egg
+
+# Data & Models (generated)
+data/processed/
+data/KDDTrain+.txt
+data/KDDTest+.txt
+saved_models/
+logs/
+
+# Environment
+.env
+venv/
+.venv/
 
 # IDE
 .vscode/
 .idea/
-
-# Logs
-logs/*.log
+*.swp
+*.swo
 
 # OS
-Thumbs.db
 .DS_Store
+Thumbs.db
 
-# Processed data (large files)
-data/processed/
+# Streamlit
+.streamlit/
 
-# Saved models (large files)
-saved_models/
+# Jupyter
+.ipynb_checkpoints/
