@@ -11,9 +11,9 @@ import sys
 # If the user mapped Streamlit Cloud to run api/main.py by accident,
 # we intercept it here to run the dashboard instead so it doesn't crash.
 is_streamlit = False
-if len(sys.argv) > 0 and "streamlit" in sys.argv[0]:
+if "streamlit" in sys.modules:
     is_streamlit = True
-elif "STREAMLIT_SERVER_PORT" in os.environ:
+elif os.environ.get("USER") in ["appuser", "adminuser"]:
     is_streamlit = True
 
 if is_streamlit:
