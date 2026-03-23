@@ -6,6 +6,25 @@ Real-time detection, feedback, alerts, and SIEM endpoints.
 
 import os
 import sys
+
+# ─── STREAMLIT COMMUNITY CLOUD FIX ───────────────────────
+# If the user mapped Streamlit Cloud to run api/main.py by accident,
+# we intercept it here to run the dashboard instead so it doesn't crash.
+is_streamlit = False
+if len(sys.argv) > 0 and "streamlit" in sys.argv[0]:
+    is_streamlit = True
+elif "STREAMLIT_SERVER_PORT" in os.environ:
+    is_streamlit = True
+
+if is_streamlit:
+    import streamlit as st
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    dashboard_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dashboard', 'app.py')
+    with open(dashboard_path, 'r', encoding='utf-8') as f:
+        exec(compile(f.read(), dashboard_path, 'exec'), globals())
+    st.stop()
+# ─────────────────────────────────────────────────────────
+
 import uuid
 import time
 import logging
