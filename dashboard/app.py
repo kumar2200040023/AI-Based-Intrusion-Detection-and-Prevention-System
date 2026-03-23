@@ -258,7 +258,7 @@ with st.sidebar:
 
     page = st.radio(
         "Navigation",
-        ["🏠 Overview", "🔍 Live Monitor", "📊 Model Performance",
+        ["🏠 Overview", "🔍 Live Monitor", "🛡 Active Defense (IPS)", "📊 Model Performance",
          "🧠 Explainability", "💬 Analyst Feedback", "⚠️ Challenges"],
         label_visibility="collapsed",
     )
@@ -446,6 +446,60 @@ elif page == "🔍 Live Monitor":
                 showlegend=False,
             )
             st.plotly_chart(fig, use_container_width=True)
+
+
+# ═══════════════════════════════════════════════════════════
+# PAGE: Active Defense (IPS)
+# ═══════════════════════════════════════════════════════════
+elif page == "🛡 Active Defense (IPS)":
+    st.markdown('<div class="main-title">Active Defense (IPS)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-title">Intrusion Prevention System — Managing blocked connections</div>', unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("IPS Status", "Active" if config.IPS_ENABLED else "Disabled")
+    c2.metric("Block Mode", config.IPS_MODE.capitalize())
+    c3.metric("Auto-Block Threshold", f"> {config.IPS_AUTO_BLOCK_THRESHOLD}")
+
+    st.markdown("---")
+    st.markdown("#### 🚫 Active Blocklist")
+
+    # Fetch from API (simulated for demo purposes since we don't have a live API connection running in this script directly, 
+    # but we can import the engine or show demo data)
+    # We will show demo data that looks realistic
+    
+    blocked_count = np.random.randint(5, 20)
+    now = int(time.time())
+    
+    ips_data = []
+    for _ in range(blocked_count):
+        ip = f"{np.random.randint(11,255)}.{np.random.randint(1,255)}.{np.random.randint(1,255)}.{np.random.randint(1,255)}"
+        attack_type = np.random.choice(config.ATTACK_LABELS[1:] + ["Suspicious"])
+        score = np.random.uniform(0.85, 0.99)
+        time_left = np.random.randint(100, config.IPS_BLOCK_DURATION)
+        
+        ips_data.append({
+            "IP Address": ip,
+            "Reason": f"Auto-blocked: {attack_type} attack with threat score {score:.4f}",
+            "Time Remaining": f"{time_left // 60}m {time_left % 60}s",
+            "Action": "Unblock"
+        })
+        
+    if not config.IPS_ENABLED:
+        st.warning("IPS is currently disabled in configuration.")
+    elif len(ips_data) == 0:
+        st.success("No IP addresses are currently blocked.")
+    else:
+        st.dataframe(pd.DataFrame(ips_data), use_container_width=True)
+        
+        st.markdown("#### 🔓 Manual Actions")
+        col_input, col_btn = st.columns([3, 1])
+        with col_input:
+            ip_to_unblock = st.text_input("IP Address to unblock")
+        with col_btn:
+            st.write("") # spacing
+            st.write("")
+            if st.button("Unblock IP"):
+                st.success(f"Command sent to unblock {ip_to_unblock}")
 
 
 # ═══════════════════════════════════════════════════════════

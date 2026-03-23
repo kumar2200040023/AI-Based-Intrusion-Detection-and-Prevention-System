@@ -138,6 +138,12 @@ THRESHOLD_DECAY = 0.01  # Adjustment step
 RETRAIN_INTERVAL_HOURS = 24
 MIN_FEEDBACK_FOR_RETRAIN = 50
 
+# ─── IPS Engine ──────────────────────────────────────────
+IPS_ENABLED = True
+IPS_MODE = "simulated"  # Options: "simulated", "os"
+IPS_BLOCK_DURATION = 3600  # Default block duration in seconds (1 hour)
+IPS_AUTO_BLOCK_THRESHOLD = 0.85  # Threat score threshold to automatically block an IP
+
 # ─── MongoDB ──────────────────────────────────────────────
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB = "antigravity_ids"

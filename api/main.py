@@ -23,6 +23,7 @@ from api.schemas import (
 )
 from engine.fusion import DecisionFusionEngine
 from engine.feedback import FeedbackStore, IncrementalLearner, RetrainingScheduler
+from engine.ips import IPSEngine
 from api.siem import SIEMIntegration
 
 # ─── Logging ──────────────────────────────────────────────
@@ -61,6 +62,7 @@ fusion_engine = DecisionFusionEngine()
 feedback_store = FeedbackStore()
 incremental_learner = IncrementalLearner()
 retraining_scheduler = RetrainingScheduler(feedback_store, incremental_learner)
+ips_engine = IPSEngine(mode=config.IPS_MODE, block_duration=config.IPS_BLOCK_DURATION)
 siem_integration = SIEMIntegration()
 
 # ML Models (lazy loaded)
@@ -127,6 +129,14 @@ async def detect(request: DetectionRequest):
     3. Temporal Pattern Detection (LSTM)
     4. Decision Fusion → Threat Verdict
     """
+    
+    # ── IPS Fast Path: Drop if blocked ──
+    if config.IPS_ENABLED and ips_engine.is_blocked(request.src_ip):
+        raise HTTPException(
+            status_code=403, 
+            detail=f"IPS BLOCK: Traffic from {request.src_ip} is currently dropped."
+        )
+
     alert_id = str(uuid.uuid4())[:12]
     features = np.array([request.features], dtype=np.float32)
 
@@ -150,6 +160,13 @@ async def detect(request: DetectionRequest):
         temporal_scores, classifier_labels
     )
     v = verdicts[0]
+
+    # ── IPS Active Defense ──
+    if config.IPS_ENABLED and v.is_threat and v.score >= config.IPS_AUTO_BLOCK_THRESHOLD:
+        ips_engine.block_ip(
+            request.src_ip, 
+            reason=f"Auto-blocked: {v.attack_type} attack with threat score {v.score:.4f}"
+        )
 
     # SIEM alert
     siem_integration.send_alert(v)
@@ -235,6 +252,29 @@ async def get_alerts(limit: int = 50):
         "count": len(alerts),
         "total": siem_integration.get_alert_count(),
     }
+
+
+# ─── IPS Endpoints ────────────────────────────────────
+@app.get("/ips/blocklist")
+async def get_ips_blocklist():
+    """🛡 Retrieve current IPS blocklist."""
+    return {
+        "blocklist": ips_engine.get_blocklist(),
+        "mode": ips_engine.mode,
+        "enabled": config.IPS_ENABLED
+    }
+
+from pydantic import BaseModel
+class UnblockRequest(BaseModel):
+    ip_address: str
+
+@app.post("/ips/unblock")
+async def ips_unblock(request: UnblockRequest):
+    """🔓 Formally unblock an IP address."""
+    success = ips_engine.unblock_ip(request.ip_address)
+    if success:
+        return {"status": "success", "message": f"IP {request.ip_address} unblocked."}
+    raise HTTPException(status_code=404, detail=f"IP {request.ip_address} not found in blocklist.")
 
 
 # ─── Health Check ────────────────────────────────────────
